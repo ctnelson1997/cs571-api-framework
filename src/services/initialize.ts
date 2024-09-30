@@ -116,6 +116,7 @@ export class CS571Initializer {
             const origin =  req.headers.origin;
             if (!origin || origin === 'null' || origin === 'undefined' || /^(https?):\/\/(localhost|127\.0\.0\.1|(www\.)?cs571\.org|(www\.)?cs571api\.cs\.wisc\.edu|(www\.)?pages\.cs\.wisc\.edu)(\/|:\d+\/?|$)/.test(origin)) {
                 res.header("Access-Control-Allow-Origin", origin);
+                res.header('Access-Control-Allow-Credentials', 'true');
             } else {
                 res.header("Access-Control-Allow-Origin", "Goodbye!");
             }
@@ -126,7 +127,6 @@ export class CS571Initializer {
                 if(req.headers["access-control-request-method"]) {
                     res.header('Access-Control-Allow-Methods', req.headers["access-control-request-method"]);
                 }
-                res.header('Access-Control-Allow-Credentials', 'true');
                 res.header('Vary', 'Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods')
             }
             
