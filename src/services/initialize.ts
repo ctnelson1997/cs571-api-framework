@@ -26,7 +26,11 @@ export class CS571Initializer {
         CS571Initializer.initErrorHandling(app);
         CS571Initializer.initBodyParsing(app);
         CS571Initializer.initRateLimiting<T>(app, config.PUBLIC_CONFIG);
-        CS571Initializer.initCorsPolicy(app);
+
+        if(options?.skipCors === false) {
+            CS571Initializer.initCorsPolicy(app);
+        }
+
         if(options?.skipAuth === false) {
             CS571Initializer.initAuth(app, auth, options?.allowNoAuth);
         }
