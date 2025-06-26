@@ -26,10 +26,7 @@ export class CS571Initializer {
         CS571Initializer.initErrorHandling(app);
         CS571Initializer.initBodyParsing(app);
         CS571Initializer.initRateLimiting<T>(app, config.PUBLIC_CONFIG);
-
-        if(options?.skipCors === false) {
-            CS571Initializer.initCorsPolicy(app);
-        }
+        CS571Initializer.initCorsPolicy(app, options?.skipCors ?? false);
 
         if(options?.skipAuth === false) {
             CS571Initializer.initAuth(app, auth, options?.allowNoAuth);
@@ -115,10 +112,10 @@ export class CS571Initializer {
         app.set('trust proxy', 1);
     }
 
-    private static initCorsPolicy(app: Express): void {
+    private static initCorsPolicy(app: Express, loose: boolean): void {
         app.use(function (req, res, next) {
             const origin =  req.headers.origin;
-            if (!origin || origin === 'null' || origin === 'undefined' || /^(https?):\/\/(localhost|127\.0\.0\.1|(www\.)?cs571\.org|(www\.)?cs571api\.cs\.wisc\.edu|(www\.)?pages\.cs\.wisc\.edu)(\/|:\d+\/?|$)/.test(origin)) {
+            if (loose || (!origin || origin === 'null' || origin === 'undefined' || /^(https?):\/\/(localhost|127\.0\.0\.1|(www\.)?cs571\.org|(www\.)?cs571api\.cs\.wisc\.edu|(www\.)?pages\.cs\.wisc\.edu)(\/|:\d+\/?|$)/.test(origin))) {
                 res.header("Access-Control-Allow-Origin", origin);
                 res.header('Access-Control-Allow-Credentials', 'true');
             } else {
