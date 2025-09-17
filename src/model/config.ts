@@ -6,6 +6,7 @@ export class CS571Config<T = CS571DefaultPublicConfig, K = CS571DefaultSecretCon
     public static readonly DEFAULT_PUBLIC_CONFIG_PATH: string = 'config.public';
     public static readonly DEFAULT_PRIVATE_CONFIG_PATH: string = 'config.secret';
 
+    public readonly SEMESTER: string;
     public readonly PRODUCT: string;
     public readonly ENV_NAME: string;
     public readonly PORT: number;
@@ -14,6 +15,7 @@ export class CS571Config<T = CS571DefaultPublicConfig, K = CS571DefaultSecretCon
     public readonly SECRET_CONFIG: K;
 
     private constructor(publicPath: string, secretPath: string) {
+        this.SEMESTER = process.env["SEMESTER"] ?? "f00";
         this.PRODUCT = process.env["PRODUCT"] ?? "unknown";
         this.ENV_NAME = process.env["ENV_NAME"] ?? "dev";
         this.PORT = parseInt(process.env["PORT"] ?? "37190");

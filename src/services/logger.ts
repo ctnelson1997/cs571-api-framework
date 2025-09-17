@@ -19,7 +19,10 @@ export class CS571Logger {
             host: this.config.SECRET_CONFIG.LOKI_HOST ?? "http://localhost:3100",
             format: winston.format.json({deterministic: false}),
             labels: {
-                "service": this.config.PRODUCT
+                "service_name": `${this.config.SEMESTER}-${this.config.PRODUCT}`,
+                "semester": this.config.SEMESTER,
+                "product": this.config.PRODUCT,
+                "env": this.config.ENV_NAME
             },
             json: true,
             basicAuth: `${this.config.SECRET_CONFIG.LOKI_USER}:${this.config.SECRET_CONFIG.LOKI_PASS}`,
