@@ -1,15 +1,14 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
-import morgan from 'morgan';
 import dotenv from 'dotenv';
 import cookies from "cookie-parser";
 
 import { CS571Auth } from './auth';
-import { CS571Util } from './util';
 import { rateLimit } from 'express-rate-limit';
 import { CS571App } from '../model/app';
 import { CS571Router } from '../model/router';
 import { CS571DefaultPublicConfig, CS571DefaultSecretConfig } from '../interfaces';
 import { CS571Config, CS571InitOptions } from '../model';
+import { CS571Logger } from './logger';
 
 export class CS571Initializer {
     static init<
@@ -22,7 +21,7 @@ export class CS571Initializer {
         const config = CS571Config.construct<T, K>();
         const auth = CS571Auth.construct(config);
         
-        CS571Initializer.initLogging(app, auth, config);
+        const logger = CS571Initializer.initLogging(app, auth, config);
         CS571Initializer.initErrorHandling(app);
         CS571Initializer.initBodyParsing(app);
         CS571Initializer.initRateLimiting<T>(app, config.PUBLIC_CONFIG);
@@ -38,7 +37,7 @@ export class CS571Initializer {
             router.finalize();
         }
 
-        const appBundle = CS571App.construct<T, K>(router, config, auth);
+        const appBundle = CS571App.construct<T, K>(router, config, auth, logger);
         return appBundle;
     }
 
@@ -46,30 +45,40 @@ export class CS571Initializer {
         dotenv.config();
     }
 
-    private static initLogging(app: Express, auth: CS571Auth, config: CS571Config): void {
-        app.use(morgan((tokens, req, res) => {
+    private static initLogging(app: Express, auth: CS571Auth, config: CS571Config): CS571Logger {
+        const logger = CS571Logger.construct(config);
+        app.use((req: Request, res: Response, next: NextFunction): void => {
+            const start = Date.now();
+            let duration = 0;
+            res.on('finish', () => {
+                duration = Date.now() - start;
+            });
             if (config.PUBLIC_CONFIG.LOG_IPS) {
-                return [
-                    CS571Util.getDateForLogging(),
-                    tokens['remote-addr'](req, res),
-                    tokens.method(req, res),
-                    tokens.url(req, res),
-                    tokens.status(req, res),
-                    auth.getUserFromRequest(req).email,
-                    tokens['response-time'](req, res), 'ms'
-                ].join(' ')
+                logger.info({
+                    ip: req.ip,
+                    ips: req.ips.join(","),
+                    user: auth.getUserFromRequest(req).email,
+                    method: req.method,
+                    url: req.originalUrl,
+                    body: typeof req.body === "object" ? JSON.stringify(req.body) : (typeof req.body === "string" ? req.body : undefined),
+                    status: res.statusCode,
+                    duration: duration
+                })
             } else {
-                return [
-                    CS571Util.getDateForLogging(),
-                    tokens.method(req, res),
-                    tokens.url(req, res),
-                    tokens.status(req, res),
-                    auth.getUserFromRequest(req).email,
-                    tokens['response-time'](req, res), 'ms'
-                ].join(' ')
+                logger.info({
+                    ip: req.ip,
+                    ips: req.ips.join(","),
+                    user: auth.getUserFromRequest(req).email,
+                    method: req.method,
+                    url: req.originalUrl,
+                    body: typeof req.body === "object" ? JSON.stringify(req.body) : (typeof req.body === "string" ? req.body : undefined),
+                    status: res.statusCode,
+                    duration: duration
+                })
             }
-            
-        }));
+            next();
+        });
+        return logger;
     }
 
     private static initErrorHandling(app: Express): void {
