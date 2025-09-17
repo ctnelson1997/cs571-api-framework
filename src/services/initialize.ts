@@ -66,8 +66,6 @@ export class CS571Initializer {
                 })
             } else {
                 logger.info({
-                    ip: req.ip,
-                    ips: req.ips.join(","),
                     user: auth.getUserFromRequest(req).email,
                     method: req.method,
                     url: req.originalUrl,
