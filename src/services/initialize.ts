@@ -49,11 +49,9 @@ export class CS571Initializer {
         const logger = CS571Logger.construct(config);
         app.use((req: Request, res: Response, next: NextFunction): void => {
             const start = Date.now();
-            let duration = 0;
             res.on('finish', () => {
-                duration = Date.now() - start;
-            });
-            if (config.PUBLIC_CONFIG.LOG_IPS) {
+                let duration = Date.now() - start;
+                if (config.PUBLIC_CONFIG.LOG_IPS) {
                 logger.info({
                     ip: req.ip,
                     ips: req.ips.join(","),
@@ -74,6 +72,7 @@ export class CS571Initializer {
                     duration: duration
                 })
             }
+            });
             next();
         });
         return logger;
