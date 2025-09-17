@@ -33,7 +33,9 @@ export class CS571Logger {
             onConnectionError: (err) => {
                 console.error("Loki connection failed...", err);
                 console.error("Retrying in 15 seconds...");
-                this.init();
+                setTimeout(() => {
+                    this.init();
+                }, 15000);
             },
         });
         const consoleTransport = new winston.transports.Console({
