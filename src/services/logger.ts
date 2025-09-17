@@ -17,7 +17,7 @@ export class CS571Logger {
     private init(): winston.Logger {
         const lokiTransport = new LokiTransport({
             host: this.config.SECRET_CONFIG.LOKI_HOST ?? "http://localhost:3100",
-            format: winston.format.json(),
+            format: winston.format.json({deterministic: false}),
             labels: {
                 "service": this.config.PRODUCT
             },
@@ -34,7 +34,7 @@ export class CS571Logger {
             },
         });
         const consoleTransport = new winston.transports.Console({
-            format: winston.format.json(),
+            format: winston.format.json({deterministic: false}),
         });
 
         lokiTransport.on("error", (err: Error) => {
@@ -42,7 +42,7 @@ export class CS571Logger {
         });
 
         return winston.createLogger({
-            format: winston.format.json(),
+            format: winston.format.json({deterministic: false}),
             transports: [
                 lokiTransport,
                 consoleTransport
@@ -53,9 +53,9 @@ export class CS571Logger {
     private _log(level: string, log: CS571Log) {
         let dt = new Date();
         this.logger.log(level, {
-            ...log,
             dt: dt.toLocaleString("en-US", { timeZone: "America/Chicago" }),
-            ts: dt.getTime()
+            ts: dt.getTime(),
+            ...log
         })
     }
 
