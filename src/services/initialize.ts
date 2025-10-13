@@ -9,19 +9,20 @@ import { CS571Router } from '../model/router';
 import { CS571DefaultPublicConfig, CS571DefaultSecretConfig } from '../interfaces';
 import { CS571Config, CS571InitOptions } from '../model';
 import { CS571Logger } from './logger';
+import { CS571MiddlewareBodyExtractor } from '../model/types';
 
 export class CS571Initializer {
     static init<
         T extends CS571DefaultPublicConfig,
         K extends CS571DefaultSecretConfig
-    >(app: Express, options?: CS571InitOptions): CS571App<T, K> {
+    >(app: Express, options: CS571InitOptions): CS571App<T, K> {
         CS571Initializer.initEnvironmentVars(app);
 
         const router = CS571Router.construct(app);
         const config = CS571Config.construct<T, K>();
         const auth = CS571Auth.construct(config);
         
-        const logger = CS571Initializer.initLogging(app, auth, config);
+        const logger = CS571Initializer.initLogging(app, auth, config, options?.middlewareBodyExtractor);
         CS571Initializer.initErrorHandling(app);
         CS571Initializer.initBodyParsing(app);
         CS571Initializer.initRateLimiting<T>(app, config.PUBLIC_CONFIG);
@@ -45,7 +46,7 @@ export class CS571Initializer {
         dotenv.config();
     }
 
-    private static initLogging(app: Express, auth: CS571Auth, config: CS571Config): CS571Logger {
+    private static initLogging(app: Express, auth: CS571Auth, config: CS571Config, mbe: CS571MiddlewareBodyExtractor): CS571Logger {
         const logger = CS571Logger.construct(config);
         app.use((req: Request, res: Response, next: NextFunction): void => {
             const start = Date.now();
@@ -58,7 +59,7 @@ export class CS571Initializer {
                     user: auth.getUserFromRequest(req).email,
                     method: req.method,
                     url: req.originalUrl,
-                    body: typeof req.body === "object" ? JSON.stringify(req.body) : (typeof req.body === "string" ? req.body : undefined),
+                    body: mbe(req, res),
                     status: res.statusCode,
                     duration: duration
                 })
@@ -67,7 +68,7 @@ export class CS571Initializer {
                     user: auth.getUserFromRequest(req).email,
                     method: req.method,
                     url: req.originalUrl,
-                    body: typeof req.body === "object" ? JSON.stringify(req.body) : (typeof req.body === "string" ? req.body : undefined),
+                    body: mbe(req, res),
                     status: res.statusCode,
                     duration: duration
                 })
