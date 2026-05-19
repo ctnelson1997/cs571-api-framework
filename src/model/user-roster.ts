@@ -17,6 +17,10 @@ export class CS571UserRoster {
         return this.bids.get(bid) ?? CS571User.ANONYMOUS_USER;
     }
 
+    public addBid(bid: string, user: CS571User) {
+        this.bids.set(bid, user);
+    }
+
     public isValid(bid: string): boolean {
         return this.bids.has(bid) && (this.bids.get(bid)?.isValid() ?? false)
     }

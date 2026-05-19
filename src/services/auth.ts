@@ -15,12 +15,12 @@ export class CS571Auth {
     }
 
     public async init(): Promise<void> {
-        setInterval(() => { this.fetchLatestBadgerIds() }, 1000 * 60 * 1);
+        setInterval(() => { this.fetchLatestBadgerIds() }, 1000 * 60 * 60); // pull full load every hr
         await this.fetchLatestBadgerIds();
     }
 
     public async fetchLatestBadgerIds() {
-        const res = await fetch(this.config.SECRET_CONFIG.AUTH_HOST, {
+        const res = await fetch(this.config.SECRET_CONFIG.AUTH_HOST + "/get-all-bids", {
             headers: {
                 "X-CS571-SECRET": this.config.SECRET_CONFIG.X_CS571_SECRET
             }
@@ -28,13 +28,33 @@ export class CS571Auth {
         this.roster = new CS571UserRoster(await res.json());
     }
 
-    public authenticate(req: Request): boolean {
+    public async authenticate(req: Request): Promise<boolean> {
         if (req.method !== 'OPTIONS') {
             const xid = req.header('X-CS571-ID')
             if (xid && this.roster.isValid(xid.toLowerCase())) {
                 return true;
             } else {
-                return false;
+                const res = await fetch(this.config.SECRET_CONFIG.AUTH_HOST + "/verify-bid", {
+                    headers: {
+                        "X-CS571-ID": xid as string
+                    }
+                });
+
+                if (res.status === 200) {
+                    const data = await res.json();
+                    this.roster.addBid(xid as string, new CS571User(
+                        data.email,
+                        data.bid,
+                        data.nickname,
+                        data.iat,
+                        data.eat
+                    ));
+                    return true;
+                } else {
+                    return false;
+                }
+
+
             }
         } else {
             return true;

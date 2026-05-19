@@ -10,6 +10,7 @@ export class CS571Config<T = CS571DefaultPublicConfig, K = CS571DefaultSecretCon
     public readonly PRODUCT: string;
     public readonly ENV_NAME: string;
     public readonly PORT: number;
+    public readonly USE_LOKI: boolean;
 
     public readonly PUBLIC_CONFIG: T;
     public readonly SECRET_CONFIG: K;
@@ -19,6 +20,7 @@ export class CS571Config<T = CS571DefaultPublicConfig, K = CS571DefaultSecretCon
         this.PRODUCT = process.env["PRODUCT"] ?? "unknown";
         this.ENV_NAME = process.env["ENV_NAME"] ?? "dev";
         this.PORT = parseInt(process.env["PORT"] ?? "37190");
+        this.USE_LOKI = Boolean(process.env["USE_LOKI"] ?? true);
         
         this.PUBLIC_CONFIG = JSON.parse(fs.readFileSync(publicPath).toString())
         this.SECRET_CONFIG = JSON.parse(fs.readFileSync(secretPath).toString());

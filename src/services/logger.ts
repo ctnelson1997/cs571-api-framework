@@ -15,43 +15,50 @@ export class CS571Logger {
     }
 
     private init(): winston.Logger {
-        const lokiTransport = new LokiTransport({
-            host: this.config.SECRET_CONFIG.LOKI_HOST ?? "http://localhost:3100",
-            format: winston.format.json({deterministic: false}),
-            labels: {
-                "service_name": `${this.config.SEMESTER}-${this.config.PRODUCT}`,
-                "semester": this.config.SEMESTER,
-                "product": this.config.PRODUCT,
-                "env": this.config.ENV_NAME
-            },
-            json: true,
-            basicAuth: `${this.config.SECRET_CONFIG.LOKI_USER}:${this.config.SECRET_CONFIG.LOKI_PASS}`,
-            replaceTimestamp: true,
-            batching: true,
-            interval: 5,
-            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-            onConnectionError: (err) => {
-                console.error("Loki connection failed...", err);
-                console.error("Retrying in 15 seconds...");
-                setTimeout(() => {
-                    this.init();
-                }, 15000);
-            },
-        });
-        const consoleTransport = new winston.transports.Console({
-            format: winston.format.json({deterministic: false}),
-        });
 
-        lokiTransport.on("error", (err: Error) => {
-            console.error("Failed to transport logs", err);
-        });
+        let transports = [];
+
+        transports.push(new winston.transports.Console({
+            format: winston.format.json({ deterministic: false }),
+        }))
+
+        if (this.config.USE_LOKI) {
+            const lokiTransport = new LokiTransport({
+                host: this.config.SECRET_CONFIG.LOKI_HOST ?? "http://localhost:3100",
+                format: winston.format.json({ deterministic: false }),
+                labels: {
+                    "service_name": `${this.config.SEMESTER}-${this.config.PRODUCT}`,
+                    "semester": this.config.SEMESTER,
+                    "product": this.config.PRODUCT,
+                    "env": this.config.ENV_NAME
+                },
+                json: true,
+                basicAuth: `${this.config.SECRET_CONFIG.LOKI_USER}:${this.config.SECRET_CONFIG.LOKI_PASS}`,
+                replaceTimestamp: true,
+                batching: true,
+                interval: 5,
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                onConnectionError: (err) => {
+                    console.error("Loki connection failed...", err);
+                    console.error("Retrying in 15 seconds...");
+                    setTimeout(() => {
+                        this.init();
+                    }, 15000);
+                },
+            });
+
+            lokiTransport.on("error", (err: Error) => {
+                console.error("Failed to transport logs", err);
+            });
+
+            transports.push(lokiTransport);
+        }
+
+
 
         return winston.createLogger({
-            format: winston.format.json({deterministic: false}),
-            transports: [
-                lokiTransport,
-                consoleTransport
-            ],
+            format: winston.format.json({ deterministic: false }),
+            transports: transports,
         });
     }
 

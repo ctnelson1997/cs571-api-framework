@@ -143,8 +143,8 @@ export class CS571Initializer {
     }
 
     private static initAuth(app: Express, auth: CS571Auth, noAuthRoutes: string[] | undefined): CS571Auth {
-        app.use(function (req, res, next) {
-            if((noAuthRoutes && noAuthRoutes.includes(req.originalUrl.split("?")[0])) || auth.authenticate(req)) {
+        app.use(async function (req, res, next) {
+            if((noAuthRoutes && noAuthRoutes.includes(req.originalUrl.split("?")[0])) || await auth.authenticate(req)) {
                 next();
             } else {
                 res.status(401).send({
